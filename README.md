@@ -1,3 +1,5 @@
+Forked from: https://gitlab.com/las2mile/scrcpy-android.git
+
 # scrcpy-android
 
 - This application is android port to desktop applicaton [**Scrcpy**](https://github.com/Genymobile/scrcpy).
@@ -5,11 +7,6 @@
 - This application mirrors display and touch controls from a target android device to scrcpy-android device.
 
 - scrcpy-android uses ADB-Connect interface to connect to android device to be mirrored.
-
-
-## Download
-
-[scrcpy-release-v1.2.apk](https://gitlab.com/las2mile/scrcpy-android/raw/master/release/scrcpy-release.apk)
 
 
 ## Instructions to use
