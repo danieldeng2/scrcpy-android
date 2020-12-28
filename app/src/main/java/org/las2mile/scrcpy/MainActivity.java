@@ -14,7 +14,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.SystemClock;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -44,7 +43,6 @@ import java.util.Enumeration;
 
 public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, SensorEventListener {
 
-    //    private static final String TAG = "MainActivity";
     private static final String PREFERENCE_KEY = "default";
     private static final String PREFERENCE_SPINNER_RESOLUTION = "spinner_resolution";
     private static final String PREFERENCE_SPINNER_BITRATE = "spinner_bitrate";
@@ -52,7 +50,7 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
     private static int screenHeight;
     private static boolean landscape = false;
     private static boolean first_time = true;
-    private static boolean resultofRotation = false;
+    private static boolean resultOfRotation = false;
     private static boolean serviceBound = false;
     private static boolean nav = false;
     SensorManager sensorManager;
@@ -61,14 +59,12 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
     private String localip;
     private Context context;
     private String serverAdr = null;
-    private InputStream inputStream;
     private SurfaceView surfaceView;
     private Surface surface;
     private Scrcpy scrcpy;
-    private long timestamp = 0;
     private byte[] fileBase64;
 
-    private ServiceConnection serviceConnection = new ServiceConnection() {
+    private final ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             scrcpy = ((Scrcpy.MyServiceBinder) iBinder).getService();
@@ -97,7 +93,7 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
             final Button startButton = (Button) findViewById(R.id.button_start);
             AssetManager assetManager = getAssets();
             try {
-                inputStream = assetManager.open("scrcpy-server.jar");
+                InputStream inputStream = assetManager.open("scrcpy-server.jar");
                 byte[] buffer = new byte[inputStream.available()];
                 inputStream.read(buffer);
                 fileBase64 = Base64.encode(buffer, 2);
@@ -357,7 +353,7 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
     public void loadNewRotation() {
         unbindService(serviceConnection);
         serviceBound = false;
-        resultofRotation = true;
+        resultOfRotation = true;
         landscape = !landscape;
         swapDimensions();
         if (landscape) {
@@ -381,7 +377,7 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
     @Override
     protected void onResume() {
         super.onResume();
-        if (!first_time && !resultofRotation) {
+        if (!first_time && !resultOfRotation) {
             final View decorView = getWindow().getDecorView();
             decorView.setSystemUiVisibility(
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -394,28 +390,20 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
                 scrcpy.resume();
             }
         }
-        resultofRotation = false;
+        resultOfRotation = false;
     }
 
     @Override
     public void onBackPressed() {
-        if (timestamp == 0) {
-            timestamp = SystemClock.uptimeMillis();
-            Toast.makeText(context, "Press again to exit", Toast.LENGTH_SHORT).show();
-        } else {
-            long now = SystemClock.uptimeMillis();
-            if (now < timestamp + 1000) {
-                timestamp = 0;
-                if (serviceBound) {
-                    scrcpy.StopService();
-                    unbindService(serviceConnection);
-                }
-                android.os.Process.killProcess(android.os.Process.myPid());
-                System.exit(1);
-            }
-            timestamp = 0;
+        if (serviceBound) {
+            scrcpy.StopService();
+            unbindService(serviceConnection);
+            restart(this);
+            return;
         }
 
+        android.os.Process.killProcess(android.os.Process.myPid());
+        System.exit(1);
     }
 
 
@@ -437,5 +425,12 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
 
+    }
+
+    public static void restart(Context context){
+        Intent mainIntent = new Intent(context, MainActivity.class);
+        mainIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.getApplicationContext().startActivity(mainIntent);
+        System.exit(0);
     }
 }
